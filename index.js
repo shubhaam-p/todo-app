@@ -9,7 +9,7 @@ const {userRouter} = require("./routes/user.js");
 const app = express();
 app.use(express.json());
 app.get('/',function(req, res){
-    res.json('Home page');
+    res.sendFile(__dirname + '/index.html');
 })
 
 app.use('/admin',adminRouter);

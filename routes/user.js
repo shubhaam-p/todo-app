@@ -64,7 +64,7 @@ function validateJWT(req, res, next){
             res.status(401).send('unauthorized');
         }
     }else
-        res.sendStatus(500);
+        res.status(500).send('unautharized');
 }
 
 //Get all todos
@@ -80,9 +80,9 @@ userRouter.get('/todo', validateJWT, async function(req, res){
 
 // Add a new todo
 userRouter.post('/todos', validateJWT, async function(req, res){
-    title = req.body.title;
-    userId = req.userId;
-
+    const title = req.body.title;
+    const userId = req.userId;
+    
     const add = await todosModel.create({
         title:title,
         userId:userId
