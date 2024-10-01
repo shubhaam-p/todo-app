@@ -9,7 +9,9 @@ usersSchema = new Schema({
 
 todosSchema = new Schema({
     title: String,
-    userId: String
+    userId: String,
+    done: { type: Boolean, default:false },
+    createdOn: { type: Date, default: Date.now }
 })
 
 const usersModel = mongoose.model("users", usersSchema);

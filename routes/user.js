@@ -1,8 +1,9 @@
 const {Router} = require("express");
 const {todosModel, usersModel} = require("../db");
-const {getPwdHashed, checkUser} = require("../auth");
+const {getPwdHashed, checkUser, validateJWT} = require("../auth");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const path = require("path");
 
 const saltRounds = 10;
 const userRouter = Router();
@@ -51,26 +52,26 @@ userRouter.post('/signin', async function(req, res){
         res.json("User does not exist!");
 })
 
-function validateJWT(req, res, next){
-    if(req.headers && req.headers.token){
-        const token = req.headers.token;
-        console.log("token ",token);
-        try {
-            decoded = jwt.verify(token, process.env.JWT_SECRET);
-            console.log("decoded ",decoded);
-            req.userId = decoded.id
-            next();
-        } catch (e) {
-            res.status(401).send('unauthorized');
-        }
-    }else
-        res.status(500).send('unautharized');
-}
+//page after signed in
+userRouter.get('/', validateJWT, function(req, res){
+    res.sendFile(path.resolve(__dirname + '/../views/index.html'));
+})
+
+//sign in form
+userRouter.get('/signInPage',function(req, res){
+    res.sendFile(path.resolve(__dirname + '/../views/signIn.html'));
+})
+
+//sign up form
+userRouter.get('/signupPage',function(req, res){
+    res.sendFile(path.resolve(__dirname + '/../views/signUp.html'));
+})
 
 //Get all todos
 userRouter.get('/todo', validateJWT, async function(req, res){
     const getTodos = await todosModel.find({
-        userId:req.userId
+        userId:req.userId,
+        done:false
     });
     if(getTodos){
         res.json(getTodos);
@@ -79,7 +80,7 @@ userRouter.get('/todo', validateJWT, async function(req, res){
 });
 
 // Add a new todo
-userRouter.post('/todos', validateJWT, async function(req, res){
+userRouter.post('/addtodo', validateJWT, async function(req, res){
     const title = req.body.title;
     const userId = req.userId;
     
@@ -89,20 +90,39 @@ userRouter.post('/todos', validateJWT, async function(req, res){
     })
 
     if(add){
-        console.log(add._id);
-        res.json(`Created new todo ${add._id}`);
+        res.json({_id:add._id, title:title});
     }else
-        res.json('Error occured');
+        res.json('Error occured');  
 });
 
 // Update a todo
-userRouter.put('/todos/:id', function(req, res){
-    res.json('In user signin')
+userRouter.put('/todos/:id', async function(req, res){
+    console.log(req.params.id);
+    const docId = req.params.id;
+    const title = req.body.title;
+    const done = req.body.done;
+
+    const data = {
+        title:title,
+        done:done
+    }
+    const updateData={};
+    Object.entries(data).forEach(([key, value])=>{
+        if(value){
+            updateData[key] = value;
+        }
+    })
+    const update = await todosModel.updateOne({_id:docId},{$set:updateData})
+    if(update)
+        res.json('Updated successfully')
 });
 
 // Delete a todo
-userRouter.delete('/todos/:id', function(req, res){
-    res.json('In user signin')
+userRouter.delete('/todos/:id', async function(req, res){
+    const docId = req.params.id;
+    const update = await todosModel.deleteOne({_id:docId})
+    if(update)
+        res.json('Deleted successfully')
 });
 
 module.exports = {

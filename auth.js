@@ -22,7 +22,24 @@ function checkUser(req, res){
     });
 }
 
+function validateJWT(req, res, next){
+    if(req.headers && req.headers.token){
+        const token = req.headers.token;
+        // console.log("token ",token);
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+            // console.log("decoded ",decoded);
+            req.userId = decoded.id
+            next();
+        } catch (e) {
+            res.status(401).send('unauthorized');
+        }
+    }else
+        res.status(500).redirect("/user/signInPage");
+}
+
 module.exports = {
     getPwdHashed,
-    checkUser
+    checkUser,
+    validateJWT
 }
