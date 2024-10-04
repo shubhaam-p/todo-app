@@ -12,24 +12,11 @@
        async function signIn(){
         const username = document.getElementById("signinUsername").value; 
         const password = document.getElementById("signinPassword").value;
-        const result = await axios.post('/user/signin',{username, password});
-        if(result){                         
-            tokenStr = result.data.token;
-            const headers = {
-                'token':tokenStr    
-            }
-            const result = await axios.get('/user/',{ headers:headers });
-            if(result)
-                console.log("Signed In", result)
-            else
-                console.log("Error while sign-in", result)
-            // if(getTodos.data.length > 0){
-            //     // for(i=0; i<getTodos.data.length; i++){
-            //     //     list.push(getTodos.data[i].title)
-            //     // }
-            //     tasksList = getTodos.data;
-            //     addList();
-            // }
+        const result1 = await axios.post('/user/signin',{username, password});
+        if(result1){                         
+            window.location.href = '/user/';
+        }else {
+            console.log('Login failed');
         }
     }
 </script>
