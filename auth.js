@@ -1,5 +1,7 @@
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+const jwt = require("jsonwebtoken");
+
 function getPwdHashed(req, res, next){
     //validate password using zod
     const password = req.body.password;
@@ -23,16 +25,15 @@ function checkUser(req, res){
 }
 
 function validateJWT(req, res, next){
-    if(req.headers && req.headers.token){
-        const token = req.headers.token;
+    if((req.headers && req.headers.token) || req.cookies.token){
+        const token = req.headers.token || req.cookies.token;
         // console.log("token ",token);
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
-            // console.log("decoded ",decoded);
             req.userId = decoded.id
             next();
         } catch (e) {
-            res.status(401).send('unauthorized');
+            res.status(401).send(`Unauthorized ${e}}`);
         }
     }else
         res.status(500).redirect("/user/signInPage");

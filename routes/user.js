@@ -44,7 +44,8 @@ userRouter.post('/signin', async function(req, res){
             if(result){
                 const id = userExists._id.toString();
                 const token = jwt.sign({id:id}, process.env.JWT_SECRET);
-                res.json({token:token});
+                res.cookie('token', token, { httpOnly: true });
+                res.status(200).json('Logged in');
             }else
                 res.json("Invalid username/ password");
         });
@@ -53,7 +54,7 @@ userRouter.post('/signin', async function(req, res){
 })
 
 //page after signed in
-userRouter.get('/', validateJWT, function(req, res){
+userRouter.get('/', validateJWT, function(req, res){  
     res.sendFile(path.resolve(__dirname + '/../views/index.html'));
 })
 
@@ -96,7 +97,7 @@ userRouter.post('/addtodo', validateJWT, async function(req, res){
 });
 
 // Update a todo
-userRouter.put('/todos/:id', async function(req, res){
+userRouter.put('/todos/:id', validateJWT, async function(req, res){
     console.log(req.params.id);
     const docId = req.params.id;
     const title = req.body.title;
@@ -118,12 +119,17 @@ userRouter.put('/todos/:id', async function(req, res){
 });
 
 // Delete a todo
-userRouter.delete('/todos/:id', async function(req, res){
+userRouter.delete('/todos/:id', validateJWT, async function(req, res){
     const docId = req.params.id;
     const update = await todosModel.deleteOne({_id:docId})
     if(update)
         res.json('Deleted successfully')
 });
+
+userRouter.post('/logout', (req, res) => {
+    res.clearCookie('token');
+    res.status(200).send('Logged out successfully');
+});  
 
 module.exports = {
     userRouter: userRouter

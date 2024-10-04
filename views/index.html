@@ -53,48 +53,72 @@
 
     async function addTodo(){
         const todo = document.getElementById("todo").value;
-        if(!tokenStr == ''){
-            const headers = {
-                'token':tokenStr    
-            }
-            const data = {
-                'title':todo
-            }
-            
-            const result = await axios.post('/user/addtodo',data,{ headers:headers })
-            if(result.data){
-                console.log("after adding ",result.data)
-                addList(result.data);
-            }
-        }else
-            console.log("Unauthorized")
+        const headers = {
+            'token':tokenStr    
+        }
+        const data = {
+            'title':todo
+        }
+        
+        const result = await axios.post('/user/addtodo',data)
+        if(result.data){
+            console.log("after adding ",result.data)
+            addList(result.data);
+        }
     }    
+
+    async function logout(){
+        const result = await axios.post('/user/logout')
+        if(result.data){
+            console.log("after logged out ",result.data);
+            window.location.href = '/user/signInPage';
+        }else
+            console.log("Error while logging out ",result);
+
+    }
+
+    async function getTodos(){
+        const result = await axios.get('/user/todo');
+        if(result.data.length > 0){
+            tasksList = result.data;
+            addList();
+        }
+    }
+    window.onload= function(e){
+        getTodos();
+    }
 </script>
 <body>    
-    <div class="container">
-        <div id="tasks"></div>
-
-        <!-- Modal -->
-        <div>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"> + Add ToDo</button>
-        </div>
-        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title">Add task</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                <p>
-                    <input type="text" name="todo" id="todo" placeholder="Enter here...">
-                </p>
-                </div>
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="addTodo()">Add</button>
-                </div>
+    <div class="d-flex align-items-center justify-content-center vh-100">
+        <div class="container p-5">
+            <!-- logout -->
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-danger" onclick="logout()"> Logout</button>
             </div>
+            <div id="tasks"></div>
+
+            <!-- Modal -->
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"> + Add ToDo</button>
+            </div>
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title">Add task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                    <p>
+                        <input type="text" name="todo" id="todo" placeholder="Enter here...">
+                    </p>
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="addTodo()">Add</button>
+                    </div>
+                </div>
+                </div>
             </div>
         </div>
     </div>
