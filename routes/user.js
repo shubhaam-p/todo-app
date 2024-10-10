@@ -4,12 +4,42 @@ const {getPwdHashed, checkUser, validateJWT} = require("../auth");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const process = require('node:process');
+const {z} = require("zod");
 
 const saltRounds = 10;
 const userRouter = Router();
 
+process.on('uncaughtException', function(err) {
+    // Handle the error safely
+    console.log("caught error ",err)
+})
+
+async function validateUserInput(req, res, next){
+    const username = req.body.username; 
+    const password = req.body.password;
+
+    const userSchema = z.object({
+        username: z.string({invalid_type_error: "Name must be a string",}),
+        password: z.string().refine((val)=> /[A-Z]/.test(val),{message:" password must contain uppper case alphabet"})
+        .refine((val)=> /[0-9]/.test(val),{message:" password must contain number"})
+        .refine((val)=> /[a-z]/.test(val),{message:" password must contain lower case alphabet"})
+        .refine((val)=> /[~`!@#$%^&*\(\)-=+_]/.test(val),{message:" password must contain special case character"})
+    });
+
+    const validate = userSchema.safeParse({
+        username:username,
+        password:password
+    });
+    console.log(validate);
+    if(validate.success){
+        next();
+    }else
+        res.send({"validate-msg":`${validate.error}`});
+}
+
 //encrypt the pwd & store
-userRouter.post('/signup', getPwdHashed, async function(req, res){
+userRouter.post('/signup', validateUserInput, getPwdHashed, async function(req, res){
     const username = req.body.username; 
     const password = req.password;
 
@@ -72,7 +102,7 @@ userRouter.get('/signupPage',function(req, res){
 userRouter.get('/todo', validateJWT, async function(req, res){
     const getTodos = await todosModel.find({
         userId:req.userId,
-        done:false
+        isDone:false
     });
     if(getTodos){
         res.json(getTodos);
@@ -85,13 +115,13 @@ userRouter.post('/addtodo', validateJWT, async function(req, res){
     const title = req.body.title;
     const userId = req.userId;
     
-    const add = await todosModel.create({
+    const result = await todosModel.create({
         title:title,
         userId:userId
     })
 
-    if(add){
-        res.json({_id:add._id, title:title});
+    if(result){
+        res.json({_id:result._id, title:title, createdOn:result.createdOn});
     }else
         res.json('Error occured');  
 });
@@ -105,7 +135,7 @@ userRouter.put('/todos/:id', validateJWT, async function(req, res){
 
     const data = {
         title:title,
-        done:done
+        isDone:done
     }
     const updateData={};
     Object.entries(data).forEach(([key, value])=>{
@@ -125,6 +155,16 @@ userRouter.delete('/todos/:id', validateJWT, async function(req, res){
     if(update)
         res.json('Deleted successfully')
 });
+
+userRouter.post('/searchTodos',validateJWT, async function (req, res){
+    const query = req.body.query;
+    const userId = req.userId;
+    const result = await todosModel.find({userId:userId, title:{$regex:`^${query}`}, isDone:false});
+    if(result)
+        res.json(result);
+    else
+        res,json("Error ocurred!")
+})
 
 userRouter.post('/logout', (req, res) => {
     res.clearCookie('token');

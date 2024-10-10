@@ -24,6 +24,11 @@
         const docId = id;
         const result = await axios.put(`/user/todos/${id}`, {done:true})
         if(result.data){
+            tasksLen1 = tasksList.length;
+            tasksList = tasksList.filter(tasks => tasks._id !=docId);
+            tasksLen2 = tasksList.length;
+            if(tasksLen1>tasksLen2)
+                addList();
             console.log("after updating ",result.data)
         }
     }
@@ -37,9 +42,9 @@
             tasks +=`<div class="col">
                         <div class="card p-3 border bg-light">
                             <div class="card-body">
-                                <h5 class="card-title"><input type="checkbox" class="class="form-check-input"" id="done${i}"> <label for="done${i}">${tasksList[i].title}</label></h5>
+                                <h5 class="card-title"><input type="checkbox" name="compltedTask" class="form-check-input" onclick="updateTask('${tasksList[i]._id}')" > <label for="done${i}">${tasksList[i].title}</label></h5> <i class="bi bi-three-dots"></i>
                                 <div class="card-text">
-                                    <p>Created on: ${tasksList[i].createdOn}</p>
+                                    <p>Created on: ${tasksList[i].createdOn.split('T')[0]}</p>
                                     <button type="button" class="btn btn-danger btn-sm" onclick="deleteTask('${tasksList[i]._id}')"> Delete</button>
                                     <button type="button" class="btn btn-secondary btn-sm" onclick="updateTask('${tasksList[i]._id}')"> Update</button>
                                 </div>
@@ -66,6 +71,19 @@
             addList(result.data);
         }
     }    
+
+    async function searchTask(){
+        const query = document.getElementById('searchTask').value;
+        const data = {
+            'query':query
+        }
+        if(query.trim() !== ''){
+            const result = await axios.post('/user/searchTodos',data);
+            if(result){
+                console.log("result ",result.data);
+            }
+        }    
+    }
 
     async function logout(){
         const result = await axios.post('/user/logout')
@@ -94,6 +112,11 @@
             <!-- logout -->
             <div class="d-flex justify-content-end">
                 <button type="button" class="btn btn-danger" onclick="logout()"> Logout</button>
+            </div>
+            <!-- search -->
+            <div class="d-flex justify-content-start">
+                <input type="text" name="search" placeholder="Search here.." id="searchTask">
+                &nbsp;&nbsp;<button type="button" class="btn btn-secondary" onclick="searchTask()"> Search</button>
             </div>
             <div id="tasks"></div>
 
